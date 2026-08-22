@@ -64,9 +64,69 @@ export const registerController = async (req, res) => {
 };
 
 export const loginController = async (req, res) => {
-  res.status(200).json({ message: "Login Route" });
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password)
+      return res
+        .status(400)
+        .json({ success: "false", message: "Email and password are required" });
+
+    const user = await User.findOne({ email: email.toLowerCase() }).select(
+      "+password",
+    );
+
+    if (!user)
+      return res
+        .status(401)
+        .json({ success: false, message: "Invalid Email or Password" });
+
+    if (!user.isActive) {
+      return res
+        .status(403)
+        .json({ success: false, message: "Your account has been disabled" });
+    }
+
+    const isPasswordCorrect = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordCorrect) {
+      return res
+        .status(401)
+        .json({ success: "false", message: "Invalid password" });
+    }
+
+    const token = generateToken(user._id);
+
+    return res.status(200).json({
+      success: "true",
+      message: "Login Successful",
+      data: {
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+        },
+      },
+      token,
+    });
+  } catch (error) {
+    console.log("Error while logging in the user", error.message);
+  }
 };
 
 export const meController = async (req, res) => {
-  res.status(200).json({ message: "Me Route" });
+  try {
+    return res.status(201).json({
+      success: "true",
+      data: {
+        user: req.user,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: "false",
+      message: "Something went wrong",
+    });
+  }
 };
