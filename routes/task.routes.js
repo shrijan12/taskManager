@@ -10,6 +10,7 @@ import {
 
 const taskRoutes = express.Router();
 
+//needs to be logged in to access
 taskRoutes.use(protect);
 
 taskRoutes.get("/", getTask);
