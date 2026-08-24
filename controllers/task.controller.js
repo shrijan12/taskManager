@@ -100,6 +100,23 @@ export const getTask = async (req, res) => {
 
 export const getTaskByID = async (req, res) => {
   try {
+    const task = await Task.findOne({
+      _id: req.params.id,
+      createdBy: req.user._id,
+    });
+    if (!task) {
+      return res.status(400).json({
+        success: false,
+        message: "Task not found ",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        task,
+      },
+    });
   } catch (error) {
     return res.status(500).json({
       success: false,
@@ -110,6 +127,48 @@ export const getTaskByID = async (req, res) => {
 
 export const updateTask = async (req, res) => {
   try {
+    //lets find the associated task
+    const task = await Task.findOne({
+      _id: req.params.id,
+      createdBy: req.user._id,
+    });
+    if (!task) {
+      return res.status(400).json({
+        success: false,
+        message: "No task found with that ID",
+      });
+    }
+    const { title, description, status, priority, dueDate } = req.body;
+
+    if (title !== undefined) {
+      task.title = title;
+    }
+
+    if (description !== undefined) {
+      task.description = description;
+    }
+
+    if (status !== undefined) {
+      task.status = status;
+    }
+
+    if (priority !== undefined) {
+      task.priority = priority;
+    }
+
+    if (dueDate !== undefined) {
+      task.dueDate = dueDate;
+    }
+
+    await task.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Task updated successfully",
+      data: {
+        task,
+      },
+    });
   } catch (error) {
     return res.status(500).json({
       success: false,
@@ -120,6 +179,22 @@ export const updateTask = async (req, res) => {
 
 export const deleteTask = async (req, res) => {
   try {
+    const task = await Task.findOne({
+      _id: req.params.id,
+      createdBy: req.user._id,
+    });
+    if (!task) {
+      return res
+        .status(400)
+        .json({ success: false, message: "task not found" });
+    }
+
+    await task.deleteOne();
+
+    return res.status(200).json({
+      success: true,
+      message: "Task deleted successfully",
+    });
   } catch (error) {
     return res.status(500).json({
       success: false,
